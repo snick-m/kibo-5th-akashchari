@@ -56,7 +56,7 @@ public class YourService extends KiboRpcService {
     private MatOfDouble camMatrix, distCoeffs;
     private ObjectDetector detector;
     private List<String> foundItems = new LinkedList<>();
-    private String targetItem;
+    private String targetItem = "";
     private List<Mat> areaImages = new LinkedList<>();
     private List<Mat> arucoCorners = new LinkedList<>();
     private List<Quaternion> faceOrients = new LinkedList<>();
@@ -88,7 +88,7 @@ public class YourService extends KiboRpcService {
         Log.i("TEST", "initDetector: Start Initialization");
         String modelName = "model_fp16.tflite";
         ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder()
-                .setScoreThreshold(0.7f)
+                .setScoreThreshold(0.75f)
                 .setMaxResults(25)
                 .build();
         try {
@@ -102,10 +102,10 @@ public class YourService extends KiboRpcService {
 
     private Mat undistort(Mat image, Integer count) {
         if (image != null) {
-            api.saveMatImage(image, "image_" + count + ".png");
+//            api.saveMatImage(image, "image_" + count + ".png");
             Mat undistortedImage = new Mat();
             Calib3d.undistort(image, undistortedImage, camMatrix, distCoeffs);
-            api.saveMatImage(undistortedImage, String.format("image_%da_undistorted.png", count));
+//            api.saveMatImage(undistortedImage, String.format("image_%da_undistorted.png", count));
             return undistortedImage;
         }
         return null;
@@ -128,8 +128,8 @@ public class YourService extends KiboRpcService {
             Mat drawMarkers = image.clone();
 
             Aruco.detectMarkers(drawMarkers, dict, corners, ids, params);
-            Aruco.drawDetectedMarkers(drawMarkers, corners, ids);
-            api.saveMatImage(drawMarkers, "image_" + count + "b_detected.png");
+//            Aruco.drawDetectedMarkers(drawMarkers, corners, ids);
+//            api.saveMatImage(drawMarkers, "image_" + count + "b_detected.png");
             if (corners.size() > 0) {
                 Mat cornersMat = corners.get(0);
                 List<org.opencv.core.Point> srcPoints = new LinkedList<>();
@@ -150,7 +150,7 @@ public class YourService extends KiboRpcService {
                 // Crop to remove 60 pixels at the end on x axis
                 undistortedImage = undistortedImage.submat(0, 170, 0, 220);
 
-                api.saveMatImage(undistortedImage, "image_" + count + "c_cropped.png");
+//                api.saveMatImage(undistortedImage, "image_" + count + "c_cropped.png");
                 Log.i("DETECT", "image_" + count + "c_cropped.png");
                 areaImages.add(undistortedImage);
                 arucoCorners.add(cornersMat);
@@ -534,8 +534,36 @@ public class YourService extends KiboRpcService {
                 image = undistort(image, i);
                 try {
                     detectAndSaveAruco(image, i);
-                } catch (NoArucoException ex) {
-                    Log.i("TEST", "No Aruco at Area " + i);
+                } catch (NoArucoException e1) {
+                    Log.i("TEST", "Failing Aruco at Area " + i + ". Trying again.");
+                    image = api.getMatNavCam();
+                    image = undistort(image, i);
+                    try {
+                        detectAndSaveAruco(image, i);
+                    } catch (NoArucoException e2) {
+                        Log.i("TEST", "Failing Aruco at Area " + i + ". Trying again.");
+                        image = api.getMatNavCam();
+                        image = undistort(image, i);
+                        try {
+                            detectAndSaveAruco(image, i);
+                        } catch (NoArucoException e3) {
+                            Log.i("TEST", "Failing Aruco at Area " + i + ". Trying again.");
+                            image = api.getMatNavCam();
+                            image = undistort(image, i);
+                            try {
+                                detectAndSaveAruco(image, i);
+                            } catch (NoArucoException e4) {
+                                Log.i("TEST", "Failing Aruco at Area " + i + ". Trying again.");
+                                image = api.getMatNavCam();
+                                image = undistort(image, i);
+                                try {
+                                    detectAndSaveAruco(image, i);
+                                } catch (NoArucoException e5) {
+                                    Log.i("TEST", "No Aruco at Area " + i);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
