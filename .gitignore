@@ -1,0 +1,30 @@
+# OS X randomness
+.DS_Store
+
+# build products
+build/
+out/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Vim swap files
+.*.sw*
+
+# gradle
+.gradle/
+.gradletasknamecache
+local.properties
+/app/
+/guest_science_library/
+/kibo_rpc_api/
+/build.gradle
+/app/build.gradle
+/guest_science_library/build.gradle
+/kibo_rpc_api/build.gradle
+/gradle/wrapper/gradle-wrapper.properties
+/app/proguard-rules.pro
+/gradle.properties
+/settings.gradle
+/local.properties
